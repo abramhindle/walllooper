@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Wall Looper</title>
+		<script src="walllooper.js"></script>
+                <style>
+                  .flexcontainer {
+                     display: flex;
+                     flex-direction: row;
+                  }
+                  #sliderbank {
+                     width: 25%;
+                  }
+                  #2Dcanvas {
+                     width: 70%;
+                  }
+                </style>
+	</head>        
+	<body>
+	  <h1>LMO</h1>
+          <div class="flexcontainer">
+            <canvas id="2Dcanvas" width="700" height="700"></canvas>
+          </div>
+          <script>
+            var canvas = document.getElementById('2Dcanvas');
+            var ctx = canvas.getContext('2d');
+            var model = new BoxLooper();
+            var pointPlot = new BoxPlot(canvas, ctx);
+            model.addListener( pointPlot );
+            pointPlot.drawPoints( model );
+          </script>
+	</body>        
+</html>
