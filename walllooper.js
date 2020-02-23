@@ -1,4 +1,15 @@
 "use strict";
+// - [X] Draw Overlays
+// - [X] Click and add overlays
+// - [ ] Click to remove overlays?
+// - [ ] Audio
+function getCursorPosition(canvas, event) {
+    const rect = canvas.getBoundingClientRect()
+    const x = event.clientX - rect.left
+    const y = event.clientY - rect.top
+    return { x: x, y: y};
+}
+
 function testItems() {
     var items = [
         {        
@@ -64,6 +75,9 @@ class Overlay {
         this.name   = overlay.name;
         this.offset = overlay.offset;
     }
+    offsetWithin(offset) {
+        return offset >= this.offset && offset < (this.offset + this.length);
+    }
 }
 
 class BoxLooper {
@@ -73,7 +87,7 @@ class BoxLooper {
         this.overlays = overlays || [];
     }
     addOverlay( overlay ) {
-        if (item instanceof Overlay) {
+        if (overlay instanceof Overlay) {
             this.overlays.push( overlay );
         } else {
             this.overlays.push( new Overlay( overlay ) );
@@ -102,6 +116,13 @@ class BoxLooper {
             listener.update(this);
         });
     }
+    removeOverlayAtOffset( offset ) {
+        let overlays = this.overlays.filter(
+            o => ! o.offsetWithin( offset )
+        );
+        this.overlays = overlays;
+        this.update();
+    }
 }
 
 class BoxPlot {
@@ -116,6 +137,9 @@ class BoxPlot {
     update(model) {
         this.drawPoints(model);
     }
+    redraw() {
+        this.drawPoints(this.model);
+    }
     drawRectangle( row, col, length, colour, context) {
         let canvas = this.canvas;
         let width = canvas.width;
@@ -126,7 +150,6 @@ class BoxPlot {
         let x = width *(1.0*col) / ws;
         let y = row * ih;
         let w = width * (1.0*length) / ws;
-        console.log([colour, row,col,x, y, w, ih]);
         ctx.fillRect(x, y, w, ih);
     }
     drawOverlay( overlay, context ) {
@@ -140,7 +163,6 @@ class BoxPlot {
         let col = offset - row * ws;
         this.ctx.globalAlpha = 0.3;
         do {
-            console.log(["Overlay",offset, wlength,rlength]);
             // case 1 it fits on this line
             if (col + rlength < ws) {
                 this.drawRectangle(row, col, rlength, colour, context);
@@ -153,18 +175,19 @@ class BoxPlot {
             }
         } while( rlength > 0 );
         this.ctx.restore();
+        this.ctx.globalAlpha = 1.0;
+
     }
 
     drawWaveform( waveform, offset, context ) {
         let ih = context["ih"] || this.itemHeight;
         let ws = context["ws"] || this.widthSeconds;
-        let colour = item.colour;
+        let colour = waveform.colour;
         let rlength = waveform.length;
         let wlength = rlength;
         let row = Math.floor(offset / ws);
         let col = offset - row * ws;
         do {
-            console.log([colour,wlength,rlength]);
             // case 1 it fits on this line
             if (col + rlength < ws) {
                 this.drawRectangle(row, col, rlength, colour, context);
@@ -178,7 +201,6 @@ class BoxPlot {
         } while( rlength > 0 );
     }
     drawPoints(model) {
-        console.log("drawPoints");
         this.lastModel = model;
         let canvas = this.canvas;
         let width = canvas.width;
@@ -194,34 +216,74 @@ class BoxPlot {
 
         ctx.fillStyle = "grey";
         ctx.fillRect(0, 0, width, height);
-
-        for (item of model.getItems()) {
+        for (let item of model.getItems()) {
             this.drawWaveform( item, offset, context );
             offset += item.length;
         }
         // draw overlay
-        for (item of model.getOverlays()) {
+        for (let item of model.getOverlays()) {
             this.drawOverlay( item, context );
         }
 
     }
+    posToOffset( pos, context ) {
+        let canvas = this.canvas;
+        let width = canvas.width;
+        let height = canvas.height;
+        let ih = (context && context["ih"]) || this.itemHeight;
+        let ws = (context && context["ws"]) || this.widthSeconds;
+        let col = ws * 1.0 * pos.x / width;
+        let row = Math.floor(pos.y  / ih);
+        let offset = col + row * ws;
+        return {offset:offset, row: row, col: col}
+    }
     installClickListeners() {
         let canvas = this.canvas;
         let clicked = false;
-        canvas.addEventListener('mousedown', (e) => clicked = true);
-        canvas.addEventListener('mouseup', (e) => clicked = false);
-        canvas.addEventListener('mouseout', (e) => clicked = false);
-        let listener = (e) => {
-            // if (! clicked ) { return; }
-            if (this.dims === undefined || this.lastModel === undefined) {
-                return;
+        let first = false;
+        let firstPos = undefined;
+        let lastOverlay = undefined;
+        let moved = false;
+        // state enter dragging or deleting
+        canvas.addEventListener('mousedown', (e) => clicked = first = true);
+        canvas.addEventListener('mouseup', (e) => {
+            if (clicked && lastOverlay) {
+                // state dragging
+                // add an overlay
+                let newOverlay = { offset: lastOverlay.offset,
+                                   length: lastOverlay.length
+                                 };
+                this.model.addOverlay( newOverlay );
+                lastOverlay = undefined;
+            } else if (clicked) {
+                const pos = getCursorPosition(canvas, e);
+                const offsetColRow = this.posToOffset(pos, {});
+                model.removeOverlayAtOffset( offsetColRow.offset );
             }
+            first = false;
+            moved = false;
+            clicked = false;
+        });
+        canvas.addEventListener('mouseout', (e) => {clicked = false;
+                                                    lastOverlay = undefined;                                                    
+                                                    this.redraw() });
+        let listener = (e) => {
+            moved = true;
+            if (! clicked ) { return; }
             const pos = getCursorPosition(canvas, e);
-            let row = Math.floor( pos.y / this.ph );
-            let col = Math.floor( pos.x / this.pw );
-            let x = this.pmin + this.prange * (pos.x - col * this.pw) / this.pw;
-            let y = this.pmin + this.prange * (pos.y - row * this.ph) / this.ph;
-            // do something!
+            const offsetColRow = this.posToOffset(pos, {});
+            if ( first ) {
+                first = false;
+                firstPos = offsetColRow;
+            }
+            // state dragging or deleting
+
+            let len = offsetColRow.offset - firstPos.offset;
+            this.drawPoints( this.model );
+            lastOverlay = { offset: firstPos.offset, length: len, colour: "white" };
+            this.drawOverlay( lastOverlay , {} );
+
+
         };
         // canvas.addEventListener('click', listener);
         canvas.addEventListener('mousemove', listener);
