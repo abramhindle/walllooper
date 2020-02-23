@@ -25,9 +25,13 @@
             var canvas = document.getElementById('2Dcanvas');
             var ctx = canvas.getContext('2d');
             var model = new BoxLooper();
-            var pointPlot = new BoxPlot(canvas, ctx);
+            var pointPlot = new BoxPlot(canvas, ctx, model);
             model.addListener( pointPlot );
             pointPlot.drawPoints( model );
+            var items = testItems();
+            for (item of items) {
+                model.addItem( item );
+            }
           </script>
 	</body>        
 </html>
