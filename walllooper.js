@@ -337,10 +337,6 @@ class SoundView {
     loadSounds(l) {        
         l = l || defaultSounds;
         this.uris = l;
-        let isDone = function() {
-            return l.filter( x => buffers[x] ).length == l.length;
-        };
-        let doneCB = this.getLoadedCB();
         for (let uri of l) {
             loadSound( uri, isDone );
         }
