@@ -327,6 +327,7 @@ function startSound() {
         silence.noteOn(0);
       }
   }
+    return audioCtx;
 }
 
 class SoundView {
@@ -338,13 +339,14 @@ class SoundView {
         l = l || defaultSounds;
         this.uris = l;
         for (let uri of l) {
-            loadSound( uri, isDone );
+            this.loadSound( uri );
         }
     }
     addBuffer(uri,buff) {
         this.buffers[uri] = buff;
     }
     isDone() {
+        let buffers = this.buffers;
         return this.uris.filter( x => buffers[x] ).length ==
             this.uris.length;
     }
@@ -354,7 +356,8 @@ class SoundView {
         request.open('GET', soundURI, true);    
         request.responseType = 'arraybuffer';    
         request.onload = function() {
-            var audioData = request.response;      
+            var audioData = request.response;
+            var audioCtx = startSound();
             audioCtx.decodeAudioData(audioData, function(buffer) {
                 console.log("Decoding "+soundURI);
                 let myBuffer = buffer;
@@ -378,13 +381,56 @@ class SoundView {
     doneLoading() {
         // add items (buffers)
         for ( let key in this.buffers) {
-            let buff = bufferToWaveform( key, this.buffers[key], undefined );
+            let buff = this.bufferToWaveform( key, this.buffers[key], undefined );
             this.model.addItem( buff );
         }
         // listen to the model
+        this.overlayMap = [];
         model.addListener( this );       
     }
     update(model) {
         // we need a mapping between overlay and playing buffers
+        console.log("CHANGED");
+        this.checkOverlayMap();
+    }
+    deleteOverlay( overlay ) {
+        let tuple = this.overlayMap.filter( x => x[0] == overlay )[0];
+        console.log(tuple);
+        this.overlayMap = this.overlayMap.filter( x => x[0] != overlay );
+        tuple[1].stop(0);
+    }
+    makeALoop( overlay ) {
+        // only handle 1 buffer right now
+        let audioCtx = startSound();
+        let source = audioCtx.createBufferSource();
+        source.start(0);
+        // let items = this.model.getItemsOfOverlay( overlay );
+        // let item = items[0].name;
+        let item = Object.keys(this.buffers)[0];
+        let buffer = this.buffers[item];
+        source.buffer = buffer;
+        // need the offset done proper
+        source.connect(audioCtx.destination);
+        source.loop = true;
+        source.loopStart = overlay.offset;
+        source.loopEnd = overlay.offset + overlay.length;
+        return source;
+    }
+    checkOverlayMap() {
+        let moverlays = model.getOverlays();
+        // check for deleted
+        for (let tup of this.overlayMap) {
+            let overlay = tup[0]
+            if (! moverlays.includes(overlay)) {
+                this.deleteOverlay( overlay );
+            }
+        }
+        let currentOverlays = this.overlayMap.map( e => e[0] );
+        // the overlays not currently recorded
+        let newOverlays = moverlays.filter( x => ! currentOverlays.includes( x ) );
+        for (let overlay of newOverlays) {
+            let tuple = [overlay, this.makeALoop(overlay)]
+            this.overlayMap.push( tuple );
+        }
     }
 }

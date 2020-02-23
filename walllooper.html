@@ -17,21 +17,37 @@
                 </style>
 	</head>        
 	<body>
-	  <h1>LMO</h1>
-          <div class="flexcontainer">
-            <canvas id="2Dcanvas" width="700" height="700"></canvas>
+	  <h1>WALL</h1>
+          <div>
+            <button id="play">PLAY</button>
+          </div>
+
+          <div class="flexcontainer" width="100%">
+            <canvas id="2Dcanvas" width="1700" height=700></canvas>
           </div>
           <script>
             var canvas = document.getElementById('2Dcanvas');
             var ctx = canvas.getContext('2d');
             var model = new BoxLooper();
             var pointPlot = new BoxPlot(canvas, ctx, model);
+            pointPlot.widthSeconds=10;
             model.addListener( pointPlot );
             pointPlot.drawPoints( model );
             var items = testItems();
-            for (item of items) {
-                model.addItem( item );
-            }
+            // for (item of items) {
+            // model.addItem( item );
+            // }
+            // for (overlay of testOverlays()) {
+            //model.addOverlay(overlay);
+            //}
+            //model.addItem( { length: 300, colour: "pink", name: "pink"  });
+            let play = document.getElementById("play");
+            let sv = new SoundView(model);
+            play.onclick = function() {
+                startSound();
+                sv.loadSounds(undefined);
+            };
+            
           </script>
 	</body>        
 </html>
