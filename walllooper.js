@@ -1,7 +1,4 @@
 "use strict";
-/* goal 1: display boxes */
-    /* 1 minute across the screen */
-    /* display 30 second, 1 minute, 2 minute, 4 minute */
 function testItems() {
     var items = [
         {        
@@ -27,7 +24,28 @@ function testItems() {
     ];
     return items;
 }
-
+function testOverlays() {
+    var overlays = [
+        {
+            offset: 5,
+            length: 5
+        },
+        {
+            offset: 25,
+            length: 25
+        },
+        {
+            offset: 120,
+            length: 10
+        },
+        {
+            offset: 120,
+            colour: "white",
+            length: 72
+        }
+    ];
+    return overlays
+}
 
 class Waveform {
     constructor( item ) {
@@ -41,6 +59,10 @@ class Waveform {
 class Overlay {
     constructor( overlay ) {
         this.prop = overlay;
+        this.length = overlay.length;
+        this.colour = overlay.colour;
+        this.name   = overlay.name;
+        this.offset = overlay.offset;
     }
 }
 
@@ -107,6 +129,32 @@ class BoxPlot {
         console.log([colour, row,col,x, y, w, ih]);
         ctx.fillRect(x, y, w, ih);
     }
+    drawOverlay( overlay, context ) {
+        let offset = overlay.offset;
+        let ih = context["ih"] || this.itemHeight;
+        let ws = context["ws"] || this.widthSeconds;        
+        let colour  = overlay.colour || "black";
+        let rlength = overlay.length;
+        let wlength = rlength;
+        let row = Math.floor(offset / ws);
+        let col = offset - row * ws;
+        this.ctx.globalAlpha = 0.3;
+        do {
+            console.log(["Overlay",offset, wlength,rlength]);
+            // case 1 it fits on this line
+            if (col + rlength < ws) {
+                this.drawRectangle(row, col, rlength, colour, context);
+                rlength = 0;
+            } else if (col + rlength >= ws) { // from col to end of line
+                this.drawRectangle(row, col, ws - col, colour, context);
+                rlength -= (ws - col);
+                col = 0;
+                row += 1;
+            }
+        } while( rlength > 0 );
+        this.ctx.restore();
+    }
+
     drawWaveform( waveform, offset, context ) {
         let ih = context["ih"] || this.itemHeight;
         let ws = context["ws"] || this.widthSeconds;
@@ -127,7 +175,6 @@ class BoxPlot {
                 col = 0;
                 row += 1;
             }
-
         } while( rlength > 0 );
     }
     drawPoints(model) {
@@ -153,7 +200,10 @@ class BoxPlot {
             offset += item.length;
         }
         // draw overlay
-        
+        for (item of model.getOverlays()) {
+            this.drawOverlay( item, context );
+        }
+
     }
     installClickListeners() {
         let canvas = this.canvas;
