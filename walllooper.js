@@ -74,6 +74,15 @@ class Overlay {
         this.colour = overlay.colour;
         this.name   = overlay.name;
         this.offset = overlay.offset;
+        this.fixOrder();
+    }
+    fixOrder() {
+        if (this.length < 0) {
+            let len = this.offset - (this.offset + this.length);
+            let offset = this.offset + this.length;
+            this.offset = offset;
+            this.length = len;
+        }
     }
     offsetWithin(offset) {
         return offset >= this.offset && offset < (this.offset + this.length);
@@ -290,3 +299,96 @@ class BoxPlot {
     }
 }
 
+// MDN example https://mdn.github.io/webaudio-examples/decode-audio-data/
+var audioCtx;
+var defaultSounds = ['reverb-1234567-dtmf.ogg'];
+
+// load an individual sound
+// load Sounds and call a callback
+// initialize web audio -- must be clicked @_@
+function startSound() {
+  if (audioCtx === undefined) {
+      // Fix iOS Audio Context by Blake Kus https://gist.github.com/kus/3f01d60569eeadefe3a1
+      // MIT license
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioCtx.resume();
+      // prime the pump!
+      var buffer  = audioCtx.createBuffer(1, 1, 22050);
+      var silence = audioCtx.createBufferSource();
+      silence.buffer = buffer;
+      // Connect to output (speakers)
+      silence.connect(audioCtx.destination);
+      // Play sound
+      if (silence.start) {
+        silence.start(0);
+      } else if (silence.play) {
+        silence.play(0);
+      } else if (silence.noteOn) {
+        silence.noteOn(0);
+      }
+  }
+}
+
+class SoundView {
+    constructor(model) {
+        this.model = model;
+        this.buffers = {};
+    }    
+    loadSounds(l) {        
+        l = l || defaultSounds;
+        this.uris = l;
+        let isDone = function() {
+            return l.filter( x => buffers[x] ).length == l.length;
+        };
+        let doneCB = this.getLoadedCB();
+        for (let uri of l) {
+            loadSound( uri, isDone );
+        }
+    }
+    addBuffer(uri,buff) {
+        this.buffers[uri] = buff;
+    }
+    isDone() {
+        return this.uris.filter( x => buffers[x] ).length ==
+            this.uris.length;
+    }
+    loadSound(soundURI) {
+        let request = new XMLHttpRequest();
+        let self = this;
+        request.open('GET', soundURI, true);    
+        request.responseType = 'arraybuffer';    
+        request.onload = function() {
+            var audioData = request.response;      
+            audioCtx.decodeAudioData(audioData, function(buffer) {
+                console.log("Decoding "+soundURI);
+                let myBuffer = buffer;
+                self.addBuffer(soundURI, myBuffer);
+                if (self.isDone()) {
+                    self.doneLoading();
+                }
+            },                               
+            function(e){"Error with decoding audio data" + e.err});      
+        };
+        request.send();
+    }
+    bufferToWaveform(name, buff, colour) {
+        colour = colour || "pink";
+        return {
+            name: name,
+            colour: colour,
+            length: buff.duration
+        }
+    }
+    doneLoading() {
+        // add items (buffers)
+        for ( let key in this.buffers) {
+            let buff = bufferToWaveform( key, this.buffers[key], undefined );
+            this.model.addItem( buff );
+        }
+        // listen to the model
+        model.addListener( this );       
+    }
+    update(model) {
+        // we need a mapping between overlay and playing buffers
+    }
+}
