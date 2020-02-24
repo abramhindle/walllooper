@@ -1,8 +1,9 @@
 "use strict";
 // - [X] Draw Overlays
 // - [X] Click and add overlays
-// - [ ] Click to remove overlays?
-// - [ ] Audio
+// - [X] Click to remove overlays?
+// - [X] Audio
+// - [ ] Fix audio glitch
 function getCursorPosition(canvas, event) {
     const rect = canvas.getBoundingClientRect()
     const x = event.clientX - rect.left
@@ -397,13 +398,14 @@ class SoundView {
         let tuple = this.overlayMap.filter( x => x[0] == overlay )[0];
         console.log(tuple);
         this.overlayMap = this.overlayMap.filter( x => x[0] != overlay );
-        tuple[1].stop(0);
+        tuple[1].loop = false;
+        tuple[1].stop();
+        
     }
     makeALoop( overlay ) {
         // only handle 1 buffer right now
         let audioCtx = startSound();
         let source = audioCtx.createBufferSource();
-        source.start(0);
         // let items = this.model.getItemsOfOverlay( overlay );
         // let item = items[0].name;
         let item = Object.keys(this.buffers)[0];
@@ -411,9 +413,10 @@ class SoundView {
         source.buffer = buffer;
         // need the offset done proper
         source.connect(audioCtx.destination);
-        source.loop = true;
         source.loopStart = overlay.offset;
         source.loopEnd = overlay.offset + overlay.length;
+        source.loop = true;
+        source.start(0, overlay.offset);
         return source;
     }
     checkOverlayMap() {
