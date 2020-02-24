@@ -3,13 +3,33 @@
 // - [X] Click and add overlays
 // - [X] Click to remove overlays?
 // - [X] Audio
-// - [ ] Fix audio glitch
+// - [X] Fix audio glitch
+// - [X] delete mode?
+// - [ ] add touch events
+/*
 function getCursorPosition(canvas, event) {
     const rect = canvas.getBoundingClientRect()
     const x = event.clientX - rect.left
     const y = event.clientY - rect.top
     return { x: x, y: y};
+}*/
+function getCursorPosition(canvas, e) {
+    if ( e.targetTouches && e.targetTouches.length > 0) {
+        var touch = e.targetTouches[0];
+        var x = touch.pageX  - canvas.offsetLeft;
+        var y = touch.pageY  - canvas.offsetTop;
+        return { x: x, y: y};
+    } else {
+        //var rect = e.target.getBoundingClientRect();
+        const rect = canvas.getBoundingClientRect()
+        var x = e.offsetX || e.pageX - rect.left - window.scrollX;
+        var y = e.offsetY || e.pageY - rect.top  - window.scrollY;
+        var x = e.pageX  - canvas.offsetLeft;
+        var y = e.pageY  - canvas.offsetTop;
+        return { x: x, y: y};
+    }
 }
+
 
 function testItems() {
     var items = [
@@ -88,6 +108,24 @@ class Overlay {
     offsetWithin(offset) {
         return offset >= this.offset && offset < (this.offset + this.length);
     }
+    overlaps(off1,off2) {
+        // offset with off1 and off2
+        if (this.offset >= off1 && this.offset <= off2) {
+            return true;
+        }
+        // offset + length within off1 and off2
+        if (this.offset + this.length >= off1 && this.offset + this.length <= off2) {
+            return true;
+        }
+        // off1 and off2 within offset and offset.length
+        if (off1 >= this.offset && off1 <= this.offset+this.length) {
+            return true;
+        }
+        if (off2 >= this.offset && off2 <= this.offset+this.length) {
+            return true;
+        }
+        return false;
+    }
 }
 
 class BoxLooper {
@@ -133,6 +171,14 @@ class BoxLooper {
         this.overlays = overlays;
         this.update();
     }
+    removeOverlaysBetween( offset, offset2 ) {
+        let overlays = this.overlays.filter(
+            o => ! o.overlaps(offset, offset2)
+        );
+        this.overlays = overlays;
+        this.update();
+    }
+
 }
 
 class BoxPlot {
@@ -143,6 +189,7 @@ class BoxPlot {
         this.installClickListeners();
         this.itemHeight = 100;
         this.widthSeconds =  60;
+        this.deleteMode = false;
     }
     update(model) {
         this.drawPoints(model);
@@ -247,6 +294,9 @@ class BoxPlot {
         let offset = col + row * ws;
         return {offset:offset, row: row, col: col}
     }
+    setDeleteMode(v) {
+        this.deleteMode = v;
+    }
     installClickListeners() {
         let canvas = this.canvas;
         let clicked = false;
@@ -257,14 +307,17 @@ class BoxPlot {
         // state enter dragging or deleting
         canvas.addEventListener('mousedown', (e) => clicked = first = true);
         canvas.addEventListener('mouseup', (e) => {
-            if (clicked && lastOverlay) {
+            if (clicked && lastOverlay && this.deleteMode) {
+                model.removeOverlaysBetween( lastOverlay.offset, lastOverlay.offset +  lastOverlay.length);
+                lastOverlay = undefined;                
+            } else if (clicked && lastOverlay) {
                 // state dragging
                 // add an overlay
                 let newOverlay = { offset: lastOverlay.offset,
                                    length: lastOverlay.length
                                  };
                 this.model.addOverlay( newOverlay );
-                lastOverlay = undefined;
+                lastOverlay = undefined;                
             } else if (clicked) {
                 const pos = getCursorPosition(canvas, e);
                 const offsetColRow = this.posToOffset(pos, {});
