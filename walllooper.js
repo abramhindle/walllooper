@@ -5,7 +5,9 @@
 // - [X] Audio
 // - [X] Fix audio glitch
 // - [X] delete mode?
-// - [ ] add touch events
+// - [X] add touch events
+// - [ ] Test Touch Events
+// - [ ] size canvas to screen
 /*
 function getCursorPosition(canvas, event) {
     const rect = canvas.getBoundingClientRect()
@@ -305,8 +307,9 @@ class BoxPlot {
         let lastOverlay = undefined;
         let moved = false;
         // state enter dragging or deleting
-        canvas.addEventListener('mousedown', (e) => clicked = first = true);
-        canvas.addEventListener('mouseup', (e) => {
+        let mousedown = (e) => {clicked = first = true};
+
+        let mouseup = (e) => {
             if (clicked && lastOverlay && this.deleteMode) {
                 model.removeOverlaysBetween( lastOverlay.offset, lastOverlay.offset +  lastOverlay.length);
                 lastOverlay = undefined;                
@@ -326,11 +329,12 @@ class BoxPlot {
             first = false;
             moved = false;
             clicked = false;
-        });
-        canvas.addEventListener('mouseout', (e) => {clicked = false;
-                                                    lastOverlay = undefined;                                                    
-                                                    this.redraw() });
-        let listener = (e) => {
+        };
+        let mouseout = (e) => {clicked = false;
+                               lastOverlay = undefined;                                                    
+                               this.redraw() };
+
+        let mousemove = (e) => {
             moved = true;
             if (! clicked ) { return; }
             const pos = getCursorPosition(canvas, e);
@@ -348,9 +352,26 @@ class BoxPlot {
 
 
         };
-        // canvas.addEventListener('click', listener);
-        canvas.addEventListener('mousemove', listener);
-    }
+        canvas.addEventListener('mouseout',  mouseout);
+        canvas.addEventListener('mousedown', mousedown);
+        canvas.addEventListener('mouseup',   mouseup);
+        canvas.addEventListener('mousemove', mousemove);
+        let touchstart = (e) => { 
+            this.lasttouch = e;                                         
+            return mousedown(e);
+        };
+        let touchend  = (e) => {
+            var touch = (this.lasttouch)?this.lasttouch:e;
+            return mouseup(touch);
+        };
+        let touchmove = (e) => {
+            this.lasttouch = e;                                         
+            return mousemove(e);
+        };
+        canvas.addEventListener('touchstart',  touchstart);
+        canvas.addEventListener('touchend', touchend);
+        canvas.addEventListener('touchmove',   touchmove);
+   }
 }
 
 // MDN example https://mdn.github.io/webaudio-examples/decode-audio-data/
