@@ -6,7 +6,8 @@
 // - [X] Fix audio glitch
 // - [X] delete mode?
 // - [X] add touch events
-// - [ ] Test Touch Events
+// - [X] Test Touch Events
+// - [X] Fix the offset issue
 // - [ ] size canvas to screen
 /*
 function getCursorPosition(canvas, event) {
@@ -23,11 +24,13 @@ function getCursorPosition(canvas, e) {
         return { x: x, y: y};
     } else {
         //var rect = e.target.getBoundingClientRect();
-        const rect = canvas.getBoundingClientRect()
-        var x = e.offsetX || e.pageX - rect.left - window.scrollX;
+        const rect = canvas.getBoundingClientRect();
+        /* var x = e.offsetX || e.pageX - rect.left - window.scrollX;
         var y = e.offsetY || e.pageY - rect.top  - window.scrollY;
         var x = e.pageX  - canvas.offsetLeft;
-        var y = e.pageY  - canvas.offsetTop;
+        var y = e.pageY  - canvas.offsetTop; */
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
         return { x: x, y: y};
     }
 }
