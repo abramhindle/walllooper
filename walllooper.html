@@ -17,9 +17,12 @@
                 </style>
 	</head>        
 	<body>
-	  <h1>WALL</h1>
-          <div>
+	  <h1>WALL
             <button id="play">PLAY</button>
+          </h1>
+          <div>
+            <button id="plain">Add</button>
+            <button id="delete">Delete</button>
           </div>
 
           <div class="flexcontainer" width="100%">
@@ -49,7 +52,15 @@
                 //sv.loadSounds(['gothgirl-ear-tomb-xix-clip.ogg']);
                 sv.loadSounds(undefined);
             };
-            
+            let deleteB = document.getElementById("delete");
+            deleteB.onclick = function() {
+                pointPlot.setDeleteMode(true);
+            };
+            let plain = document.getElementById("plain");
+            plain.onclick = function() {
+                pointPlot.setDeleteMode(false);
+            };
+
           </script>
 	</body>        
 </html>
