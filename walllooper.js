@@ -8,7 +8,11 @@
 // - [X] add touch events
 // - [X] Test Touch Events
 // - [X] Fix the offset issue
+// - [ ] clicks / envelopes
+// - [ ] support multiple clips
 // - [ ] size canvas to screen
+// - [ ] Fix touch dimensions
+// - [ ] Add URL
 /*
 function getCursorPosition(canvas, event) {
     const rect = canvas.getBoundingClientRect()
@@ -19,8 +23,9 @@ function getCursorPosition(canvas, event) {
 function getCursorPosition(canvas, e) {
     if ( e.targetTouches && e.targetTouches.length > 0) {
         var touch = e.targetTouches[0];
-        var x = touch.pageX  - canvas.offsetLeft;
-        var y = touch.pageY  - canvas.offsetTop;
+        const rect = canvas.getBoundingClientRect();
+        var x = touch.pageX  - rect.left;
+        var y = touch.pageY  - rect.top;
         return { x: x, y: y};
     } else {
         //var rect = e.target.getBoundingClientRect();

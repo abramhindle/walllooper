@@ -18,7 +18,9 @@
 	</head>        
 	<body>
 	  <h1>WALL
-            <button id="play">PLAY</button>
+            <button id="play1">1</button>
+            <button id="play2">2</button>
+            <button id="play3">3</button>
           </h1>
           <div>
             <button id="plain">Add</button>
@@ -46,12 +48,19 @@
             //model.addItem( { length: 300, colour: "pink", name: "pink"  });
             let play = document.getElementById("play");
             let sv = new SoundView(model);
-            play.onclick = function() {
+            document.getElementById("play1").onclick = function() {
                 startSound();
-                // sv.loadSounds(['Skruntskrunt-versus-Lord-Cernunnos--Battle-for-Port-Arthur-Part-I.ogg']);
-                //sv.loadSounds(['gothgirl-ear-tomb-xix-clip.ogg']);
+                sv.loadSounds(['sine-sweep.ogg']);
+            };
+            document.getElementById("play2").onclick = function() {
+                startSound();
                 sv.loadSounds(undefined);
             };
+            document.getElementById("play3").onclick = function() {
+                startSound();
+                sv.loadSounds(['Skruntskrunt-versus-Lord-Cernunnos--Battle-for-Port-Arthur-Part-I-short.ogg']);
+            };
+            //sv.loadSounds(['gothgirl-ear-tomb-xix-clip.ogg']);
             let deleteB = document.getElementById("delete");
             deleteB.onclick = function() {
                 pointPlot.setDeleteMode(true);
