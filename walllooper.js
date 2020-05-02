@@ -188,7 +188,9 @@ class BoxLooper {
         this.overlays = overlays;
         this.update();
     }
-
+    clear() {
+        this.removeOverlaysBetween(-Number.POSITIVE_INFINITY,Number.POSITIVE_INFINITY);
+    }
 }
 
 class BoxPlot {
@@ -427,7 +429,10 @@ class BoxPlot {
         canvas.addEventListener('touchstart',  touchstart);
         canvas.addEventListener('touchend', touchend);
         canvas.addEventListener('touchmove',   touchmove);
-   }
+    }
+    clear() {
+        this.model.clear();
+    }
 }
 
 // MDN example https://mdn.github.io/webaudio-examples/decode-audio-data/
