@@ -226,6 +226,9 @@ class BoxPlot {
         ctx.fillRect(x, y, w, ih);
     }
     drawWave( row, col, length, startTime, endTime, context, buffer) {
+	if (! this.drawCache ) {
+		this.drawCache = {};
+	}
         let canvas = this.canvas;
         let width = canvas.width;
         let height = canvas.height;
@@ -243,13 +246,26 @@ class BoxPlot {
 	let g = 0;
 	let b = 0;
 	//   ctx.fillStyle = "rgba("+r+","+g+","+b+","+(128/255)+")";
-        ctx.fillStyle = "rgb("+r+","+g+","+b+")";
+        // ctx.fillStyle = "rgb("+r+","+g+","+b+")";
+	var px = ctx.createImageData(1, 1); 
+	var d = px.data;
+        d[0] = r;
+        d[1] = g;
+        d[2] = b;
+        d[3] = 255;
 	let sampleW = w / samples;
 	console.log(sampleW);
-	for (var i = 0; i < samples;i++) {
-		ctx.fillRect( x+i*sampleW, y+0.5*ih+0.5*ih*channel[startSample+i], 1, 1 );	
+	let cachekey = [ row, col, length, startTime, endTime ].join(" ");
+	if ( this.drawCache[cachekey] ) {
+		ctx.putImageData(this.drawCache[cachekey],x,y);
+	} else {
+		for (var i = 0; i < samples;i++) {
+			ctx.putImageData(px, Math.floor(x+i*sampleW), Math.floor(y+0.5*ih+0.5*ih*channel[startSample+i]));
+		}
+		var cache = ctx.getImageData(x,y,w, ih); 
+		this.drawCache[cachekey] = cache;
+	        //ctx.fillRect(x, y, w, ih);
 	}
-        //ctx.fillRect(x, y, w, ih);
     }
     drawOverlay( overlay, context ) {
         let offset = overlay.offset;
