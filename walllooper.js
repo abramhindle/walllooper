@@ -8,7 +8,7 @@
 // - [X] add touch events
 // - [X] Test Touch Events
 // - [X] Fix the offset issue
-// - [ ] clicks / envelopes
+// - [X] clicks / envelopes
 // - [ ] support multiple clips
 // - [ ] size canvas to screen
 // - [ ] Fix touch dimensions
@@ -419,6 +419,62 @@ function startSound() {
     return audioCtx;
 }
 
+function findZeroCrossing(channel, startSample, direction) {
+    let len = channel.length
+    let cnt = 0;
+    var last = 0;
+    var lasti = 0;
+    while (startSample >= 0 && startSample < len) {
+        let sample = channel[startSample];
+        if (sample == 0.0) {
+            return startSample;
+        }        
+        if (cnt > 0) {
+            if ( (direction < 0 &&last <= 0 && sample >= 0) || (direction >= 0 && last >= 0 && sample <= 0)) {
+                return lasti;
+            }
+        }
+        last = sample;
+        lasti = startSample;
+        startSample += direction;
+        cnt++;
+    }
+    // we're either at the start or end by now
+    return startSample;    
+}
+
+function clipBufferAtZeroCrossing(buffer,
+                                  startTime,
+                                  endTime) {
+    let sr = buffer.sampleRate;
+    let length = buffer.length;    
+    let startSample = Math.floor(sr * startTime);
+    let endSample = Math.floor(sr * endTime);
+    let nsamples = endSample - startSample;
+    if (endSample >= length) {
+        endSample = length - 1;
+    }
+    console.log(buffer);
+    let channel = buffer.getChannelData(0);
+    // let nchannels = channels.length;
+    //let channel = channels[0];
+    let szc = findZeroCrossing(channel,startSample,-1);
+    let ezc = findZeroCrossing(channel,endSample,1);
+    let addStartZero = !(szc >= 0 && channel[szc] == 0.0)?1:0;
+    let addEndZero   = !(ezc >= 0 && ezc < length && channel[ezc] == 0.0)?1:0;
+    if (ezc >= length) {
+        addEndZero = 1;
+    }
+    let newlen       =   ezc - szc + addEndZero + addStartZero
+    let arrayBuffer  =   audioCtx.createBuffer(1, newlen, buffer.sampleRate);//  new Float32Array(newlen);
+    let floatBuffer  =   arrayBuffer.getChannelData(0);
+    floatBuffer.set(
+        channel.subarray(Math.max(0,szc),Math.min(length-1,ezc)),
+        addStartZero);
+    return arrayBuffer;
+}
+
+
 class SoundView {
     constructor(model) {
         this.model = model;
@@ -498,13 +554,18 @@ class SoundView {
         // let item = items[0].name;
         let item = Object.keys(this.buffers)[0];
         let buffer = this.buffers[item];
-        source.buffer = buffer;
+        let clip = clipBufferAtZeroCrossing(buffer,
+                                            overlay.offset,
+                                            overlay.offset + overlay.length);
+        source.buffer = clip;
+        // console.log(buffer);
         // need the offset done proper
         source.connect(audioCtx.destination);
-        source.loopStart = overlay.offset;
-        source.loopEnd = overlay.offset + overlay.length;
+        // source.loopStart = overlay.offset;
+        // source.loopEnd = overlay.offset + overlay.length;
         source.loop = true;
-        source.start(0, overlay.offset);
+        // source.start(0, overlay.offset);
+        source.start(0);
         return source;
     }
     checkOverlayMap() {
