@@ -18,9 +18,12 @@
 	</head>        
 	<body>
 	  <h1>WALL
-            <button id="play1">1</button>
+            <button id="play1">Sine</button>
             <button id="play2">2</button>
             <button id="play3">3</button>
+            <button id="play4">4</button>
+            <button id="play5">5</button>
+            <button id="play6">Face</button>
           </h1>
           <div>
             <button id="plain">Add</button>
@@ -59,6 +62,18 @@
             document.getElementById("play3").onclick = function() {
                 startSound();
                 sv.loadSounds(['Skruntskrunt-versus-Lord-Cernunnos--Battle-for-Port-Arthur-Part-I-short.ogg']);
+            };
+            document.getElementById("play4").onclick = function() {
+                startSound();
+                sv.loadSounds(['nice-loop-1.ogg']);
+            };
+            document.getElementById("play5").onclick = function() {
+                startSound();
+                sv.loadSounds(['nice-loop-1-long.ogg']);
+            };
+            document.getElementById("play6").onclick = function() {
+                startSound();
+                sv.loadSounds(['i-want-to-touch-my-face.ogg']);
             };
             //sv.loadSounds(['gothgirl-ear-tomb-xix-clip.ogg']);
             let deleteB = document.getElementById("delete");
