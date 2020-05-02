@@ -8,7 +8,7 @@
 // - [X] add touch events
 // - [X] Test Touch Events
 // - [X] Fix the offset issue
-// - [ ] clicks / envelopes
+// - [X] clicks / envelopes
 // - [ ] support multiple clips
 // - [ ] size canvas to screen
 // - [ ] Fix touch dimensions
