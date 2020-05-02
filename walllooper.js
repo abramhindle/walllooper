@@ -225,6 +225,32 @@ class BoxPlot {
         let w = width * (1.0*length) / ws;
         ctx.fillRect(x, y, w, ih);
     }
+    drawWave( row, col, length, startTime, endTime, context, buffer) {
+        let canvas = this.canvas;
+        let width = canvas.width;
+        let height = canvas.height;
+        let ih = context["ih"] || this.itemHeight;
+        let ws = context["ws"] || this.widthSeconds;
+        let x = width *(1.0*col) / ws;
+        let y = row * ih;
+        let w = width * (1.0*length) / ws;
+        let channel = buffer.getChannelData(0);
+	let n = channel.length;
+	let startSample = Math.floor(startTime * buffer.sampleRate);
+	let endSample = Math.floor(endTime * buffer.sampleRate);
+	let samples = endSample - startSample;
+	let r = 255;
+	let g = 0;
+	let b = 0;
+	//   ctx.fillStyle = "rgba("+r+","+g+","+b+","+(128/255)+")";
+        ctx.fillStyle = "rgb("+r+","+g+","+b+")";
+	let sampleW = w / samples;
+	console.log(sampleW);
+	for (var i = 0; i < samples;i++) {
+		ctx.fillRect( x+i*sampleW, y+0.5*ih+0.5*ih*channel[startSample+i], 1, 1 );	
+	}
+        //ctx.fillRect(x, y, w, ih);
+    }
     drawOverlay( overlay, context ) {
         let offset = overlay.offset;
         let ih = context["ih"] || this.itemHeight;
@@ -260,14 +286,20 @@ class BoxPlot {
         let wlength = rlength;
         let row = Math.floor(offset / ws);
         let col = offset - row * ws;
+	let startTime = 0;
         do {
             // case 1 it fits on this line
             if (col + rlength < ws) {
                 this.drawRectangle(row, col, rlength, colour, context);
+		this.drawWave(row,col,rlength,startTime, startTime+rlength,context, waveform.prop.buffer);
+		startTime += rlength;
                 rlength = 0;
             } else if (col + rlength >= ws) { // from col to end of line
-                this.drawRectangle(row, col, ws - col, colour, context);
-                rlength -= (ws - col);
+		let wt = ws - col;
+                this.drawRectangle(row, col, wt, colour, context);
+		this.drawWave(row,col,wt,startTime, startTime+wt,context, waveform.prop.buffer);
+                rlength -= wt;
+		startTime += wt;
                 col = 0;
                 row += 1;
             }
@@ -520,7 +552,8 @@ class SoundView {
         return {
             name: name,
             colour: colour,
-            length: buff.duration
+            length: buff.duration,
+	    buffer:  buff
         }
     }
     doneLoading() {
