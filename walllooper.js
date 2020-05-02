@@ -28,20 +28,14 @@ function getCursorPosition(canvas, e) {
         var y = touch.pageY  - rect.top;
         return { x: x, y: y};
     } else {
-        // var rect = e.target.getBoundingClientRect();
-        /* const rect = canvas.getBoundingClientRect();
-        var x = e.offsetX || e.pageX - rect.left - window.scrollX;
-        var y = e.offsetY || e.pageY - rect.top  - window.scrollY; */
-        /*
+        //var rect = e.target.getBoundingClientRect();
+        const rect = canvas.getBoundingClientRect();
+        /* var x = e.offsetX || e.pageX - rect.left - window.scrollX;
+        var y = e.offsetY || e.pageY - rect.top  - window.scrollY;
         var x = e.pageX  - canvas.offsetLeft;
         var y = e.pageY  - canvas.offsetTop; */
-        //const x = event.clientX - rect.left;
-        //const y = event.clientY - rect.top;
-        const rect = canvas.getBoundingClientRect();
         const x = event.clientX - rect.left;
         const y = event.clientY - rect.top;
-        //const x = event.clientX;
-        //const y = event.clientY;
         return { x: x, y: y};
     }
 }
