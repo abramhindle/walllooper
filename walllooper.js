@@ -253,10 +253,10 @@ class BoxPlot {
 	if ( this.drawCache[cachekey] ) {
 		ctx.putImageData(this.drawCache[cachekey],x,y);
 	} else {
-		for (var i = 0; i < samples;i++) {
-			ctx.putImageData(px, Math.floor(x+i*sampleW), Math.floor(y+0.5*ih+0.5*ih*channel[startSample+i]));
+		for (var i = 0; i < w;i+=0.1) {
+			ctx.putImageData(px, Math.floor(x+i), Math.floor(y+0.5*ih+0.5*ih*channel[Math.floor(startSample+i*samples/w)]));
 		}
-		var cache = ctx.getImageData(x,y,w, ih); 
+		var cache = ctx.getImageData(x,y,Math.max(1,w), ih); 
 		this.drawCache[cachekey] = cache;
 	        //ctx.fillRect(x, y, w, ih);
 	}
