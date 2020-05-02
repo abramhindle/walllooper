@@ -433,6 +433,15 @@ class BoxPlot {
     clear() {
         this.model.clear();
     }
+    addRandomOverlay() {
+        let maxlength = model.getItems()[0].length;
+        let offset = Math.random() * maxlength;
+        let length = 0.5*(maxlength - offset) * Math.random();
+        let newOverlay = { offset: offset,
+                           length: length
+                         };
+        this.model.addOverlay( newOverlay );
+    }
 }
 
 // MDN example https://mdn.github.io/webaudio-examples/decode-audio-data/

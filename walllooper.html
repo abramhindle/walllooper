@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Wall Looper</title>
+                <title>SkruntSkrunt: Wall Looper</title>
 		<script src="walllooper.js"></script>
                 <style>
                   .spacer {
@@ -37,6 +37,15 @@
             <button id="plain">Add</button>
             <button id="delete">Delete</button>
             <span class="spacer">&nbsp;</span>
+            <span class="spacer">&nbsp;</span>
+            <span class="spacer">&nbsp;</span>
+            <button id="rando">Rando</button>
+            <button id="5xrando">5 X Rando</button>
+            <button id="reroll">ReRoll</button>
+            <span class="spacer">&nbsp;</span>
+            <span class="spacer">&nbsp;</span>
+            <span class="spacer">&nbsp;</span>
+
             <button id="clear">Clear</button>
           </div>
 
@@ -91,6 +100,7 @@
                 let mySound = mySounds[i];
                 button.innerText = mySound.name;
                 button.onclick = function() {
+                    document.title = "WL: " + mySound.name;
                     startSound();
                     sv.loadSounds([mySound.url]);
                     disableAllButtons();
@@ -112,6 +122,23 @@
             let clear = document.getElementById("clear");
             clear.onclick = function() {
                 pointPlot.clear();
+            };
+            let rando = document.getElementById("rando");
+            rando.onclick = function() {
+                pointPlot.addRandomOverlay();
+            };
+            let xrando = document.getElementById("5xrando");
+            xrando.onclick = function() {
+                for (var i = 0 ; i < 5; i++) {
+                    pointPlot.addRandomOverlay();
+                }
+            };
+            let clearxrando = document.getElementById("reroll");
+            clearxrando.onclick = function() {
+                pointPlot.clear();
+                for (var i = 0 ; i < 5; i++) {
+                    pointPlot.addRandomOverlay();
+                }
             };
 
           </script>
