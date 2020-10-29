@@ -152,12 +152,15 @@ class BoxLooper {
         }
         this.update();
     }
-    addItem( item ) {
+    addItemNoUpdate( item ) {
         if (item instanceof Waveform) {
             this.items.push( item );
         } else {
             this.items.push( new Waveform(item) );
         }
+    }
+    addItem( item ) {
+        this.addItemNoUpdate( item );
         this.update();
     }
     getOverlays() {
@@ -255,8 +258,11 @@ class BoxPlot {
 	if ( this.drawCache[cachekey] ) {
 		ctx.putImageData(this.drawCache[cachekey],x,y);
 	} else {
-		for (var i = 0; i < w;i+=0.1) {
-			ctx.putImageData(px, Math.floor(x+i), Math.floor(y+0.5*ih+0.5*ih*channel[Math.floor(startSample+i*samples/w)]));
+                ctx.fillStyle = "rgba("+r+","+g+","+b+","+(255/255)+")";
+                for (var i = 0; i < w;i+=0.1) {
+                    ctx.fillRect( Math.floor(x+i), Math.floor(y+0.5*ih+0.5*ih*channel[Math.floor(startSample+i*samples/w)]), 1, 1 );
+                    // this was slow?
+		    //ctx.putImageData(px, Math.floor(x+i), Math.floor(y+0.5*ih+0.5*ih*channel[Math.floor(startSample+i*samples/w)]));
 		}
 		var cache = ctx.getImageData(x,y,Math.max(1,w), ih); 
 		this.drawCache[cachekey] = cache;
@@ -584,11 +590,12 @@ class SoundView {
         // add items (buffers)
         for ( let key in this.buffers) {
             let buff = this.bufferToWaveform( key, this.buffers[key], undefined );
-            this.model.addItem( buff );
+            this.model.addItemNoUpdate( buff );
         }
         // listen to the model
         this.overlayMap = [];
-        model.addListener( this );       
+        model.addListener( this );
+        this.model.update();
     }
     update(model) {
         // we need a mapping between overlay and playing buffers
